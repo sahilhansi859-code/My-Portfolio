@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard · Sahil Khan</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--card:#0a0a0f;--bd:rgba(80,160,255,.28);--tx:#f5f5f5;--mu:#a3a3ad;--a:#3b82f6;--b:#38bdf8;--c:#2563eb;--ok:#22c55e;--err:#ef4444;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.6 Inter,system-ui,sans-serif;min-height:100vh}
+h1,h2,h3{font-family:'Space Grotesk',system-ui,sans-serif}
+a{color:var(--a);text-decoration:none}
+
+/* Layout */
+.dashboard{display:flex;min-height:100vh}
+aside.sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;background:var(--card);border-right:1px solid var(--bd);z-index:30;display:flex;flex-direction:column}
+.sidebar .brand{padding:20px 18px;font-family:'Space Grotesk';font-weight:700;font-size:18px;letter-spacing:.5px;border-bottom:1px solid var(--bd)}
+.sidebar .brand span{background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.side-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:10px;color:var(--mu);font:500 14px Inter;cursor:pointer;border:1px solid transparent;margin:2px 8px;transition:.2s}
+.side-nav a:hover{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.35);color:#fff}
+.side-nav a.act{background:linear-gradient(135deg,var(--a),var(--b));color:#fff;border-color:transparent;box-shadow:0 6px 20px rgba(56,189,248,.35)}
+.side-nav a .k{font-size:12px;opacity:.7}
+.sidebar-foot{padding:16px 18px;border-top:1px solid var(--bd)}
+
+/* Main area */
+.wrap{margin-left:250px;flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:64px;border-bottom:1px solid var(--bd);background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10;backdrop-filter:blur(8px)}
+.topbar h1{font-size:17px;font-weight:700;letter-spacing:.4px}
+.topbar .user{color:var(--mu);font-size:13px;background:var(--card);border:1px solid var(--bd);padding:6px 12px;border-radius:999px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;padding:24px 24px 0 24px}
+.stat-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px 16px;display:flex;flex-direction:column;gap:6px}
+.stat-card .num{font-family:'Space Grotesk';font-weight:700;font-size:26px;color:var(--b)}
+.stat-card .lbl{color:var(--mu);font-size:12.5px;text-transform:uppercase;letter-spacing:.6px}
+
+/* Panels */
+.panels{flex:1;padding:24px;overflow-y:auto;min-width:0}
+.panel{display:none}
+.panel.act{display:block}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px}
+.panel-head h2{font-size:18px}
+.err-msg{color:var(--err);margin-bottom:12px;padding:10px 14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:10px;display:none;font-size:14px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;margin-bottom:18px}
+.table-wrap{overflow-x:auto;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--bd);font-size:14px}
+th{color:var(--mu);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.6px;background:rgba(0,0,0,.25)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(59,130,246,.06)}
+.empty{color:var(--mu);text-align:center;padding:26px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);margin:2px}
+
+/* Buttons */
+.btn{padding:10px 18px;border-radius:10px;border:1px solid var(--bd);background:linear-gradient(135deg,var(--a),var(--b));color:#fff;font:600 14px Inter;cursor:pointer;display:inline-block;transition:.2s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(56,189,248,.4)}
+.btn.o{background:none;color:var(--tx);border-color:var(--bd)}
+.btn.o:hover{background:var(--card);color:#fff;border-color:var(--a)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.danger{background:linear-gradient(135deg,#ef4444,#f87171);border-color:transparent}
+.btn.danger:hover{box-shadow:0 8px 20px rgba(239,68,68,.35)}
+.iconbtn{background:none;border:none;color:var(--mu);cursor:pointer;font-size:16px;padding:6px;border-radius:8px}
+.iconbtn:hover{color:#fff;background:rgba(255,255,255,.08)}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--card);border:1px solid var(--bd);padding:12px 22px;border-radius:12px;opacity:0;transition:.3s;z-index:60}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:var(--ok)}#toast.err{border-color:var(--err)}
+
+/* Login */
+.login{max-width:360px;margin:12vh auto;text-align:center;padding:0 16px}
+.login .brand-box{font-family:'Space Grotesk';font-weight:700;font-size:22px;margin-bottom:8px}
+.login .brand-box span{background:linear-gradient(90deg,var(--a),var(--b),var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.login p{color:var(--mu);margin-bottom:22px;font-size:14px}
+.login .btn{width:100%;margin-top:10px}
+
+@media(max-width:700px){aside.sidebar{width:220px}.wrap{margin-left:220px}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){aside.sidebar{position:relative;width:100%;height:auto;bottom:auto;border-right:none;border-bottom:1px solid var(--bd)}.wrap{margin-left:0}.topbar{padding:0 14px}}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login">
+  <div class="brand-box">⚙️ <span>ADMIN</span></div>
+  <p>Sign in to manage your portfolio content.</p>
+  <input id="lgEmail" type="email" placeholder="Email">
+  <input id="lgPass" type="password" placeholder="Password" style="margin-top:10px">
+  <button class="btn" id="lgBtn">Sign In</button>
+  <p id="lgErr" style="color:var(--err);margin-top:12px"></p>
+  <p id="sbErr" style="color:var(--err);margin-top:12px"></p>
+</div>
+
+<div id="dashboard" style="display:none" class="dashboard">
+  <aside class="sidebar">
+    <div class="brand">⚙️ <span>ADMIN</span></div>
+    <div class="side-nav" id="sideNav"></div>
+    <div class="sidebar-foot"><button class="btn" id="logout" style="width:100">Logout</button></div>
+  </aside>
+
+  <div class="wrap">
+    <header class="topbar">
+      <h1>Admin Dashboard</h1>
+      <div class="user">Sahil Khan</div>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card"><div class="num" id="stat-skills">-</div><div class="lbl">Skills</div></div>
+      <div class="stat-card"><div class="num" id="stat-projects">-</div><div class="lbl">Projects</div></div>
+      <div class="stat-card"><div class="num" id="stat-certifications">-</div><div class="lbl">Certificates</div></div>
+      <div class="stat-card"><div class="num" id="stat-profiles">-</div><div class="lbl">Profiles</div></div>
+      <div class="stat-card"><div class="num" id="stat-blogs">-</div><div class="lbl">Blogs</div></div>
+      <div class="stat-card"><div class="num" id="stat-messages">-</div><div class="lbl">Messages</div></div>
+    </div>
+
+    <div class="panels">
+
+      <!-- Skills -->
+      <section class="panel act" data-panel="skills">
+        <div class="panel-head"><h2>Skills &amp; Tools</h2><button class="btn" data-add="skills">+ Add Skill</button></div>
+        <div id="skErr" class="err-msg"></div>
+        <div class="form-grid">
+          <input id="skTitle" placeholder="Title e.g. Digital Marketing">
+          <input id="skIcon" placeholder="Icon emoji e.g. 📣">
+          <input id="skChips" placeholder="Chips comma separated e.g. SEO, Branding">
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Icon</th><th>Title</th><th>Chips</th><th></th></tr></thead><tbody id="tbSkills"></tbody></table></div>
+      </section>
+
+      <!-- Projects -->
+      <section class="panel" data-panel="projects">
+        <div class="panel-head"><h2>AI Projects</h2><button class="btn" data-add="projects">+ Add Project</button></div>
+        <div id="prErr" class="err-msg"></div>
+        <div class="form-grid">
+          <input id="prTitle" placeholder="Project title">
+          <input id="prProblem" placeholder="Problem">
+          <input id="prTech" placeholder="Tech stack">
+        </div>
+        <div class="form-grid">
+          <input id="prOutcome" placeholder="Outcome">
+          <input id="prGithub" placeholder="GitHub URL">
+          <input id="prDemo" placeholder="Live demo URL">
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Tech</th><th>Links</th><th></th></tr></thead><tbody id="tbProjects"></tbody></table></div>
+      </section>
+
+      <!-- Certifications -->
+      <section class="panel" data-panel="certifications">
+        <div class="panel-head"><h2>Certifications</h2><button class="btn" data-add="certifications">+ Add Certificate</button></div>
+        <div id="ceErr" class="err-msg"></div>
+        <div class="form-grid">
+          <input id="ceName" placeholder="Certificate name">
+          <input id="cePlat" placeholder="Platform e.g. Google">
+          <input id="ceLink" placeholder="Verification link">
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Platform</th><th>Link</th><th></th></tr></thead><tbody id="tbCertifications"></tbody></table></div>
+      </section>
+
+      <!-- Profiles -->
+      <section class="panel" data-panel="profiles">
+        <div class="panel-head"><h2>Coding Profiles</h2><button class="btn" data-add="profiles">+ Add Profile</button></div>
+        <div id="pfErr" class="err-msg"></div>
+        <div class="form-grid">
+          <input id="pfName" placeholder="Name e.g. GitHub">
+          <input id="pfUrl" placeholder="Profile URL">
+          <input id="pfNote" placeholder="Note (optional)">
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>URL</th><th>Note</th><th></th></tr></thead><tbody id="tbProfiles"></tbody></table></div>
+      </section>
+
+      <!-- Blogs -->
+      <section class="panel" data-panel="blogs">
+        <div class="panel-head"><h2>Blogs &amp; Writing</h2><button class="btn" data-add="blogs">+ Add Article</button></div>
+        <div id="bgErr" class="err-msg"></div>
+        <div class="form-grid">
+          <input id="bgTitle" placeholder="Article title">
+          <input id="bgLink" placeholder="Article URL">
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Link</th><th></th></tr></thead><tbody id="tbBlogs"></tbody></table></div>
+      </section>
+
+      <!-- Messages -->
+      <section class="panel" data-panel="messages">
+        <div class="panel-head"><h2>Contact Messages</h2><button class="btn o sm" id="refreshMsg">↻ Refresh</button></div>
+        <div id="msgErr" class="err-msg"></div>
+        <div class="table-wrap"><table><thead><tr><th>From</th><th>Message</th><th>Date</th><th></th></tr></thead><tbody id="tbMessages"></tbody></table></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+let sb = null;
+let sbInitError = null;
+try {
+  const cfg = window.SUPABASE_CONFIG;
+  if (!window.supabase) throw new Error('Supabase library not available');
+  if (!cfg || !cfg.url || !cfg.anonKey) throw new Error('Supabase config missing');
+  sb = window.supabase.createClient(cfg.url, cfg.anonKey);
+} catch (e) {
+  sbInitError = e;
+}
+const $ = id => document.getElementById(id);
+let session = null;
+
+const ERR_ID = {
+  skills: 'skErr',
+  projects: 'prErr',
+  certifications: 'ceErr',
+  profiles: 'pfErr',
+  blogs: 'bgErr',
+  messages: 'msgErr'
+};
+
+const STAT_ID = {
+  skills: 'stat-skills',
+  projects: 'stat-projects',
+  certifications: 'stat-certifications',
+  profiles: 'stat-profiles',
+  blogs: 'stat-blogs',
+  messages: 'stat-messages'
+};
+
+function showErr(table, msg) {
+  const el = $(ERR_ID[table]);
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+function clearErr(table) {
+  const el = $(ERR_ID[table]);
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
+function setStat(table, n) {
+  const el = $(STAT_ID[table]);
+  if (el) el.textContent = n === null ? '-' : n;
+}
+
+function toast(msg, ok=true){
+  const t=$('toast'); t.textContent=msg; t.className='show '+(ok?'ok':'err');
+  setTimeout(()=>t.className='',2600);
+}
+
+if (sbInitError) {
+  const el = $('sbErr');
+  if (el) { el.textContent = sbInitError.message; el.style.display = 'block'; }
+}
+
+$('lgBtn').onclick = async () => {
+  const email=$('lgEmail').value.trim(), pass=$('lgPass').value;
+  $('lgErr').textContent='';
+  try {
+    const {data,error} = await sb.auth.signInWithPassword({email,password:pass});
+    if(error){ $('lgErr').textContent=error.message; return; }
+    session=data.session; showApp();
+  } catch (e) {
+    $('lgErr').textContent = e.message;
+  }
+};
+$('lgPass').addEventListener('keydown',e=>{if(e.key==='Enter')$('lgBtn').click()});
+
+$('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+function showApp(){
+  if(!sb){
+    const el=$('sbErr');
+    if(el){ el.textContent = sbInitError ? sbInitError.message : 'Supabase not available'; el.style.display='block'; }
+    return;
+  }
+  $('loginView').style.display='none';
+  $('dashboard').style.display='flex';
+  buildSidebar();
+  loadAll();
+}
+
+function buildSidebar(){
+  const tabs=[['skills','Skills'],['projects','Projects'],['certifications','Certificates'],['profiles','Profiles'],['blogs','Blogs'],['messages','Messages']];
+  const nav=$('sideNav');
+  nav.innerHTML = tabs.map(([t,label])=>`<a data-tab="${t}"><span class="k">▸</span>${label}</a>`).join('');
+  nav.querySelectorAll('a').forEach(b=>{
+    b.onclick=()=>{
+      nav.querySelectorAll('a').forEach(x=>x.classList.remove('act'));
+      b.classList.add('act');
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('act'));
+      document.querySelector(`[data-panel="${b.dataset.tab}"]`).classList.add('act');
+      if(b.dataset.tab==='messages') loadMessages();
+    };
+  });
+  nav.querySelector('[data-tab="skills"]').classList.add('act');
+}
+
+const FIELDS = {
+  skills:   {title:'skTitle', icon:'skIcon', chips:'skChips'},
+  projects: {title:'prTitle', problem:'prProblem', tech:'prTech', outcome:'prOutcome', github_url:'prGithub', demo_url:'prDemo'},
+  certifications:{name:'ceName', platform:'cePlat', link:'ceLink'},
+  profiles: {name:'pfName', url:'pfUrl', note:'pfNote'},
+  blogs:    {title:'bgTitle', link:'bgLink'},
+};
+
+document.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=async()=>{
+  const table=btn.dataset.add, f=FIELDS[table], row={};
+  clearErr(table);
+  try {
+    for(const [k,id] of Object.entries(f)){
+      let v=$(id).value.trim();
+      if(k==='chips') v=v.split(',').map(s=>s.trim()).filter(Boolean);
+      if(v!=='') row[k]=v;
+    }
+    if(!row.title && !row.name){ showErr(table, 'Title/Name required'); return; }
+    const {error} = await sb.from(table).insert(row);
+    if(error){ showErr(table, error.message); return; }
+    Object.values(f).forEach(id=>$(id).value='');
+    toast('Added ✓');
+    loadTable(table);
+  } catch (e) {
+    showErr(table, e.message);
+  }
+});
+
+async function loadAll(){
+  for(const t of Object.keys(FIELDS)) loadTable(t);
+  loadMessages();
+}
+
+async function loadTable(table){
+  clearErr(table);
+  try {
+    let {data,error} = await sb.from(table).select('*').order('sort').order('created_at');
+    if(error && error.message.includes('sort')){
+      const retry = await sb.from(table).select('*').order('created_at');
+      data = retry.data; error = retry.error;
+    }
+    if(error){ showErr(table, error.message); setStat(table, null); return; }
+    setStat(table, data && data.length ? data.length : 0);
+    const tb=$('tb'+table.charAt(0).toUpperCase()+table.slice(1));
+    if(!data.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Nothing yet.</td></tr>'; return; }
+    tb.innerHTML = data.map(r=>{
+      let mid='';
+      if(table==='skills') mid=`${(r.chips||[]).map(c=>`<span class="tag">${c}</span>`).join('')}`;
+      if(table==='projects') mid=`${r.tech||''}<br>${r.github_url?`<a href="${r.github_url}" target="_blank" class="lk">GitHub</a>`:''}${r.demo_url?`<a href="${r.demo_url}" target="_blank" class="lk">Demo</a>`:''}`;
+      if(table==='certifications') mid=`${r.platform||''}`;
+      if(table==='profiles') mid=`<a href="${r.url}" target="_blank" class="lk">${r.url}</a>`;
+      if(table==='blogs') mid=`<a href="${r.link}" target="_blank" class="lk">${r.link}</a>`;
+      const label=r.title||r.name||'';
+      const icon = table==='skills' ? (r.icon||'📣') : '';
+      return `<tr><td>${icon}</td><td>${label}</td><td>${mid}</td><td><button class="btn danger sm" data-del="${table}:${r.id}">Delete</button></td></tr>`;
+    }).join('');
+    tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+      const [t,id]=b.dataset.del.split(':');
+      clearErr(t);
+      try {
+        const {error} = await sb.from(t).delete().eq('id',id);
+        if(error){ showErr(t, error.message); return; }
+        toast('Deleted');
+        loadTable(t);
+      } catch (e) {
+        showErr(t, e.message);
+      }
+    });
+  } catch (e) {
+    showErr(table, e.message);
+    setStat(table, null);
+  }
+}
+
+async function loadMessages(){
+  clearErr('messages');
+  try {
+    const {data,error} = await sb.from('messages').select('*').order('created_at',{ascending:false});
+    if(error){ showErr('messages', error.message); setStat('messages', null); return; }
+    setStat('messages', data && data.length ? data.length : 0);
+    const tb=$('tbMessages');
+    if(!data.length){ tb.innerHTML='<tr><td colspan="4" class="empty">No messages yet.</td></tr>'; return; }
+    tb.innerHTML = data.map(m=>{
+      const d=new Date(m.created_at).toLocaleString();
+      return `<tr><td class="${m.read?'':'msg-unread'}">${m.name}<br><small style="color:var(--mu)">${m.email}</small></td><td>${m.message.replace(/</g,'<')}</td><td style="color:var(--mu);font-size:13px">${d}</td><td><button class="btn sm ${m.read?'o':''}" data-read="${m.id}">${m.read?'Read':'Mark read'}</button> <button class="btn danger sm" data-delm="${m.id}">Del</button></td></tr>`;
+    }).join('');
+    tb.querySelectorAll('[data-read]').forEach(b=>b.onclick=async()=>{
+      clearErr('messages');
+      try {
+        const {error} = await sb.from('messages').update({read:true}).eq('id',b.dataset.read);
+        if(error){ showErr('messages', error.message); return; }
+        loadMessages();
+      } catch (e) {
+        showErr('messages', e.message);
+      }
+    });
+    tb.querySelectorAll('[data-delm]').forEach(b=>b.onclick=async()=>{
+      clearErr('messages');
+      try {
+        const {error} = await sb.from('messages').delete().eq('id',b.dataset.delm);
+        if(error){ showErr('messages', error.message); return; }
+        toast('Deleted');
+        loadMessages();
+      } catch (e) {
+        showErr('messages', e.message);
+      }
+    });
+  } catch (e) {
+    showErr('messages', e.message);
+    setStat('messages', null);
+  }
+}
+$('refreshMsg').onclick=loadMessages;
+
+sb.auth.getSession().then(({data})=>{ if(data.session){ session=data.session; showApp(); } });
+</script>
+</body>
+</html>
