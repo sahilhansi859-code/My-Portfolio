@@ -138,8 +138,21 @@ function spy(){let cur='';document.querySelectorAll('section[id]').forEach(s=>{i
 addEventListener('scroll',spy,{passive:true});spy();
 const pb=document.getElementById('pb');addEventListener('scroll',()=>{pb.style.width=Math.min(100,scrollY/Math.max(1,document.body.scrollHeight-innerHeight)*100)+'%'},{passive:true});
 document.querySelector('#about .abp img').src=document.querySelector('#photo img').src;
-const EMAIL='sahilhansi859@gmail.com';
-document.getElementById('cs').onclick=()=>{const g=i=>document.getElementById(i),n=g('cn').value.trim(),e=g('ce').value.trim(),m=g('cm').value.trim(),o=g('cx');if(!n||!e||!m){o.textContent='Please fill in all fields.';return}const a=document.createElement('a');a.href='mailto:'+EMAIL+'?subject='+encodeURIComponent('Portfolio message from '+n)+'&body='+encodeURIComponent(m+' | Name: '+n+' | Email: '+e);a.target='_blank';a.click();o.textContent='Opening your email app… If nothing opens, email me at '+EMAIL}
+const g=id=>document.getElementById(id);
+document.getElementById('cs').onclick=async()=>{
+  const n=g('cn').value.trim(), e=g('ce').value.trim(), m=g('cm').value.trim(), o=g('cx');
+  if(!n||!e||!m){ o.textContent='Please fill in all fields.'; o.style.color='var(--err)'; return; }
+  const sb=window.sb;
+  if(!sb){ o.textContent='Supabase not configured.'; o.style.color='var(--err)'; return; }
+  try {
+    const {error}=await sb.from('messages').insert({name:n,email:e,message:m});
+    if(error){ o.textContent=error.message; o.style.color='var(--err)'; return; }
+    g('cn').value=''; g('ce').value=''; g('cm').value='';
+    o.textContent='Message sent. Thank you!'; o.style.color='var(--ok)';
+  } catch (err) {
+    o.textContent=err.message; o.style.color='var(--err)';
+  }
+};
 const cv=document.getElementById('bg'),x=cv.getContext('2d');let P=[],W,H;
 const M={x:-999,y:-999,tx:-999,ty:-999},T0=performance.now(),TOUCH=matchMedia('(hover:none)').matches;let SY=0,RP=[];
 addEventListener('pointermove',e=>{if(TOUCH)return;if(M.tx<-900){M.x=e.clientX;M.y=e.clientY}M.tx=e.clientX;M.ty=e.clientY});
@@ -182,6 +195,7 @@ requestAnimationFrame(an);
   } catch (e) {
     console.error('supabase init error', e);
   }
+  window.sb = sb;
 
   function observe(nodes){
     nodes.forEach((el,n)=>{
