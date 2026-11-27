@@ -24,6 +24,13 @@ aside.sidebar{position:fixed;top:0;left:0;bottom:0;width:250px;background:var(--
 .side-nav a .k{font-size:12px;opacity:.7}
 .sidebar-foot{padding:16px 18px;border-top:1px solid var(--bd)}
 
+/* Form inputs */
+input,textarea{width:100%;background:var(--card);border:1px solid var(--bd);color:var(--tx);padding:12px 14px;border-radius:10px;font:inherit;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+input::placeholder,textarea::placeholder{color:var(--mu)}
+input:hover,textarea:hover{border-color:rgba(59,130,246,.5)}
+input:focus,textarea:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(59,130,246,.25),0 4px 16px rgba(59,130,246,.15)}
+textarea{min-height:90px;resize:vertical}
+
 /* Main area */
 .wrap{margin-left:250px;flex:1;min-width:0;display:flex;flex-direction:column}
 .topbar{height:64px;border-bottom:1px solid var(--bd);background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:10;backdrop-filter:blur(8px)}
@@ -143,7 +150,7 @@ tr:hover td{background:rgba(59,130,246,.06)}
           <input id="prGithub" placeholder="GitHub URL">
           <input id="prDemo" placeholder="Live demo URL">
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Tech</th><th>Links</th><th></th></tr></thead><tbody id="tbProjects"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Tech / Links</th><th></th></tr></thead><tbody id="tbProjects"></tbody></table></div>
       </section>
 
       <!-- Certifications -->
@@ -155,7 +162,7 @@ tr:hover td{background:rgba(59,130,246,.06)}
           <input id="cePlat" placeholder="Platform e.g. Google">
           <input id="ceLink" placeholder="Verification link">
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Platform</th><th>Link</th><th></th></tr></thead><tbody id="tbCertifications"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Platform</th><th></th></tr></thead><tbody id="tbCertifications"></tbody></table></div>
       </section>
 
       <!-- Profiles -->
@@ -167,7 +174,7 @@ tr:hover td{background:rgba(59,130,246,.06)}
           <input id="pfUrl" placeholder="Profile URL">
           <input id="pfNote" placeholder="Note (optional)">
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Name</th><th>URL</th><th>Note</th><th></th></tr></thead><tbody id="tbProfiles"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>URL</th><th></th></tr></thead><tbody id="tbProfiles"></tbody></table></div>
       </section>
 
       <!-- Blogs -->
@@ -339,7 +346,9 @@ async function loadTable(table){
     if(error){ showErr(table, error.message); setStat(table, null); return; }
     setStat(table, data && data.length ? data.length : 0);
     const tb=$('tb'+table.charAt(0).toUpperCase()+table.slice(1));
-    if(!data.length){ tb.innerHTML='<tr><td colspan="4" class="empty">Nothing yet.</td></tr>'; return; }
+    if(!data.length){ 
+      const cols = table === 'skills' ? 4 : 3;
+      tb.innerHTML=`<tr><td colspan="${cols}" class="empty">Nothing yet.</td></tr>`; return; }
     tb.innerHTML = data.map(r=>{
       let mid='';
       if(table==='skills') mid=`${(r.chips||[]).map(c=>`<span class="tag">${c}</span>`).join('')}`;
@@ -348,8 +357,11 @@ async function loadTable(table){
       if(table==='profiles') mid=`<a href="${r.url}" target="_blank" class="lk">${r.url}</a>`;
       if(table==='blogs') mid=`<a href="${r.link}" target="_blank" class="lk">${r.link}</a>`;
       const label=r.title||r.name||'';
-      const icon = table==='skills' ? (r.icon||'📣') : '';
-      return `<tr><td>${icon}</td><td>${label}</td><td>${mid}</td><td><button class="btn danger sm" data-del="${table}:${r.id}">Delete</button></td></tr>`;
+      if(table==='skills') {
+        const icon = r.icon||'📣';
+        return `<tr><td>${icon}</td><td>${label}</td><td>${mid}</td><td><button class="btn danger sm" data-del="${table}:${r.id}">Delete</button></td></tr>`;
+      }
+      return `<tr><td>${label}</td><td>${mid}</td><td><button class="btn danger sm" data-del="${table}:${r.id}">Delete</button></td></tr>`;
     }).join('');
     tb.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
       const [t,id]=b.dataset.del.split(':');
